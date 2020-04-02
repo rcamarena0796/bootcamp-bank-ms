@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -28,6 +29,7 @@ public class Bank {
     private String numId;
     @NotBlank(message = "'name' is required")
     private String name;
+    private Set<String> clientProfiles;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date joinDate;
 }

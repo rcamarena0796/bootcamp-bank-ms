@@ -5,6 +5,7 @@ import com.everis.bankms.service.BankService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Set;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +22,6 @@ import org.springframework.http.MediaType;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 
 
 import org.springframework.http.HttpStatus;
@@ -57,10 +57,16 @@ public class BankController {
         return service.findById(numId);
     }
 
-    @ApiOperation(value = "Service used to get the client type by a client numDoc")
+    @ApiOperation(value = "Service used to get if a bank exists")
     @GetMapping("/exist/{numId}")
     public Mono<Boolean> existBank(@PathVariable("numId") String numId) {
         return service.existsByNumId(numId);
+    }
+
+    @ApiOperation(value = "Service used to get the client profiles of a bank")
+    @GetMapping("/bankProfiles/{numId}")
+    public Mono<Set<String>> bankProfiles(@PathVariable("numId") String numId) {
+        return service.getClientProfiles(numId);
     }
 
     //GUARDAR UN BANCO

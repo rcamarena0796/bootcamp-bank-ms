@@ -2,6 +2,8 @@ package com.everis.bankms.service.impl;
 
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.everis.bankms.dao.BankRepository;
 import com.everis.bankms.model.Bank;
@@ -76,6 +78,17 @@ public class BankServiceImpl implements BankService {
                             dbClient.setNumId(cl.getNumId());
                         }
 
+                        //client profiles
+                        if (cl.getClientProfiles() != null) {
+                            //verificar que lista interna no sea nula
+                            if (dbClient.getClientProfiles() == null) {
+                                dbClient.setClientProfiles(new HashSet<>());
+                            }
+                            //combinar lista con lista interna y borrar duplicados
+                            Set<String> holders = dbClient.getClientProfiles();
+                            holders.addAll(cl.getClientProfiles());
+                        }
+
                         return bankRepo.save(dbClient);
 
                     }).switchIfEmpty(Mono.error(new Exception ("No se pudo encontrar el banco que se quiere actualizar")));
@@ -112,6 +125,17 @@ public class BankServiceImpl implements BankService {
                 } else return "-1";
             });
             return ret;
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
+    }
+
+    @Override
+    public Mono<Set<String>> getClientProfiles (String numId){
+        try {
+            return bankRepo.findByNumId(numId).map(bank->{
+                return bank.getClientProfiles();
+            }).switchIfEmpty(Mono.error(new Exception("Banco no encontrado")));
         } catch (Exception e) {
             return Mono.error(e);
         }
