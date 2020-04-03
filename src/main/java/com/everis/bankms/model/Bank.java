@@ -27,6 +27,7 @@ public class Bank {
     private String id;
     @NotBlank(message = "'numId' is required")
     private String numId;
+    private int maxTransactions;
     @NotBlank(message = "'name' is required")
     private String name;
     private Set<String> clientProfiles;

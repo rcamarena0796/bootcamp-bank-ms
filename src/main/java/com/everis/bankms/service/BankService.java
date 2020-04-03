@@ -1,5 +1,6 @@
 package com.everis.bankms.service;
 
+import com.everis.bankms.dto.ClientProfilesDTO;
 import com.everis.bankms.model.Bank;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,5 +24,5 @@ public interface BankService {
 
     public Mono<String> getNumId(String numDoc);
 
-    public Mono<Set<String>> getClientProfiles(String numId);
+    public Mono<ClientProfilesDTO> getClientProfiles(String numId);
 }

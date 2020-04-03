@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.everis.bankms.dao.BankRepository;
+import com.everis.bankms.dto.ClientProfilesDTO;
 import com.everis.bankms.model.Bank;
 import com.everis.bankms.service.BankService;
 import reactor.core.publisher.Mono;
@@ -50,6 +51,9 @@ public class BankServiceImpl implements BankService {
                 cl.setJoinDate(new Date());
             } else {
                 cl.setJoinDate(cl.getJoinDate());
+            }
+            if(cl.getMaxTransactions()<=0){
+                return Mono.error(new Exception("Número de transacciones maximo invalido"));
             }
             return bankRepo.save(cl);
         } catch (Exception e) {
@@ -131,10 +135,10 @@ public class BankServiceImpl implements BankService {
     }
 
     @Override
-    public Mono<Set<String>> getClientProfiles (String numId){
+    public Mono<ClientProfilesDTO> getClientProfiles (String numId){
         try {
             return bankRepo.findByNumId(numId).map(bank->{
-                return bank.getClientProfiles();
+                return new ClientProfilesDTO(bank.getClientProfiles());
             }).switchIfEmpty(Mono.error(new Exception("Banco no encontrado")));
         } catch (Exception e) {
             return Mono.error(e);
