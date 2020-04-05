@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Set;
 
 @Data
@@ -27,10 +28,13 @@ public class Bank {
     private String id;
     @NotBlank(message = "'numId' is required")
     private String numId;
-    private int maxTransactions;
     @NotBlank(message = "'name' is required")
     private String name;
     private Set<String> clientProfiles;
+    private HashMap<String, Integer> productMaxTrans;
+    private double depRetComission;
+    private double TransactionComission;
+    private double creditPayComission;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date joinDate;
 }

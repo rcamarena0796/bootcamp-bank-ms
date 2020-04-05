@@ -1,16 +1,16 @@
 package com.everis.bankms.controller;
 
+import com.everis.bankms.dto.BankMaxTransDTO;
 import com.everis.bankms.dto.ClientProfilesDTO;
+import com.everis.bankms.dto.MessageDTO;
 import com.everis.bankms.model.Bank;
 import com.everis.bankms.service.BankService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
-import java.util.Set;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,6 +70,12 @@ public class BankController {
         return service.getClientProfiles(numId);
     }
 
+    @ApiOperation(value = "Service used to get the comissions of a bank")
+    @GetMapping("/bankComission/{numId}")
+    public Mono<BankMaxTransDTO> bankComission(@PathVariable("numId") String numId) {
+        return service.getbankComission(numId);
+    }
+
     //GUARDAR UN BANCO
     @ApiOperation(value = "Service used to create clients")
     @PostMapping("/save")
@@ -100,5 +106,32 @@ public class BankController {
         return service.delete(id)
                 .then(Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT)))
                 .defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
+    }
+
+    //TRANSACCION
+    @ApiOperation(value = "Service used to manage money transactions of a bank product")
+    @PostMapping("/transaction/{idBankOrigin}/{numAccount}")
+    public Mono<MessageDTO> transaction(@PathVariable("idBankOrigin") String idBankOrigin,
+                                        @PathVariable("numAccount") String numAccount, @RequestBody double money) {
+        return service.otherBankDepositRet(idBankOrigin, numAccount, money);
+    }
+
+    //PAGAR DEUDA DE CREDITO
+    @ApiOperation(value = "Service used to pay credit card debt")
+    @PostMapping("/payCreditDebt/{idBankOrigin}/{numAccount}/{creditNumber}")
+    public Mono<MessageDTO> payCreditDebt(@PathVariable("idBankOrigin") String idBankOrigin,
+                                          @PathVariable("numAccount") String numAccount,
+                                          @PathVariable("creditNumber") String creditNumber) {
+        return service.otherBankPayCreditDebt(idBankOrigin,numAccount, creditNumber);
+    }
+
+    //PAGAR A OTRA CUENTA DE BANCO
+    @ApiOperation(value = "Service used to pay another bank account")
+    @PostMapping("/bankProductTransaction/{idBankOrigin}/{numAccountOrigin}/{numAccountDestination}")
+    public Mono<MessageDTO> bankProductTransaction(@PathVariable("idBankOrigin") String idBankOrigin,
+                                                   @PathVariable("numAccountOrigin") String numAccountOrigin,
+                                                   @PathVariable("numAccountDestination") String numAccountDestination,
+                                                   @RequestBody double money) {
+        return service.otherBankTransaction(idBankOrigin,numAccountOrigin, numAccountDestination, money);
     }
 }

@@ -6,9 +6,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.everis.bankms.dao.BankRepository;
+import com.everis.bankms.dto.BankMaxTransDTO;
 import com.everis.bankms.dto.ClientProfilesDTO;
+import com.everis.bankms.dto.MessageDTO;
 import com.everis.bankms.model.Bank;
 import com.everis.bankms.service.BankService;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import org.slf4j.Logger;
@@ -52,9 +55,7 @@ public class BankServiceImpl implements BankService {
             } else {
                 cl.setJoinDate(cl.getJoinDate());
             }
-            if(cl.getMaxTransactions()<=0){
-                return Mono.error(new Exception("Número de transacciones maximo invalido"));
-            }
+
             return bankRepo.save(cl);
         } catch (Exception e) {
             return Mono.error(e);
@@ -95,7 +96,7 @@ public class BankServiceImpl implements BankService {
 
                         return bankRepo.save(dbClient);
 
-                    }).switchIfEmpty(Mono.error(new Exception ("No se pudo encontrar el banco que se quiere actualizar")));
+                    }).switchIfEmpty(Mono.error(new Exception("No se pudo encontrar el banco que se quiere actualizar")));
         } catch (Exception e) {
             return Mono.error(e);
         }
@@ -135,14 +136,143 @@ public class BankServiceImpl implements BankService {
     }
 
     @Override
-    public Mono<ClientProfilesDTO> getClientProfiles (String numId){
+    public Mono<ClientProfilesDTO> getClientProfiles(String numId) {
         try {
-            return bankRepo.findByNumId(numId).map(bank->{
+            return bankRepo.findByNumId(numId).map(bank -> {
                 return new ClientProfilesDTO(bank.getClientProfiles());
             }).switchIfEmpty(Mono.error(new Exception("Banco no encontrado")));
         } catch (Exception e) {
             return Mono.error(e);
         }
+    }
+
+    @Override
+    public Mono<BankMaxTransDTO> getbankComission(String numId) {
+        try {
+            return bankRepo.findByNumId(numId).map(bank -> {
+                return new BankMaxTransDTO(bank.getProductMaxTrans());
+            }).switchIfEmpty(Mono.error(new Exception("Banco no encontrado")));
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
+    }
+
+    private Mono<MessageDTO> depositRet(String numAccount, double money) {
+        String url = "http://localhost:8010/bankprod/transaction/" + numAccount;
+        return WebClient.create()
+                .post()
+                .uri(url)
+                .bodyValue(money)
+                .retrieve()
+                .bodyToMono(MessageDTO.class);
+    }
+
+
+    private Mono<MessageDTO> payCreditDebt(String numAccount, String creditNumber) {
+        String url = "http://localhost:8010/bankprod/payCreditDebt/" + numAccount + "/" + creditNumber;
+        return WebClient.create()
+                .post()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(MessageDTO.class);
+    }
+
+    private Mono<MessageDTO> bankTransaction(String numAccountOrigin, String numAccountDestination, double money) {
+        String url = "http://localhost:8010/bankprod/bankProductTransaction/" + numAccountOrigin + "/" + numAccountDestination;
+        return WebClient.create()
+                .post()
+                .uri(url)
+                .bodyValue(money)
+                .retrieve()
+                .bodyToMono(MessageDTO.class);
+    }
+
+    private Mono<String> getProductBankId(String numAccount) {
+        String url = "http://localhost:8010/bankprod/getBankId/" + numAccount;
+        return WebClient.create()
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+
+    private Mono<MessageDTO> chargeComission(String numAccount, double comission) {
+        String url = "http://localhost:8010/bankprod/chargeExtComission/" + numAccount;
+        return WebClient.create()
+                .post()
+                .uri(url)
+                .bodyValue(comission)
+                .retrieve()
+                .bodyToMono(MessageDTO.class);
+    }
+
+    @Override
+    public Mono<MessageDTO> otherBankDepositRet(String idBankOrigin, String numAccount, double money) {
+        //que hago si me devuelve mono error??
+        //verificar primero que banco existe
+        return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
+            return getProductBankId(numAccount).flatMap(prodBankId -> {
+                if (!prodBankId.equals(idBankOrigin)) {
+                    return depositRet(numAccount, money).flatMap(msResponse -> {
+                        if (msResponse.getCode().equals("1")) {
+                            //cobrar comision
+                            //devolver mensaje del servicio de cobro de comision
+                            return chargeComission(numAccount, bank.getDepRetComission());
+                        } else {
+                            return Mono.error(new Exception("Error en la transaccion"));
+                        }
+                    });
+                } else {
+                    return Mono.error(new Exception("el producto pertenece a este banco"));
+                }
+            });
+        }).switchIfEmpty(Mono.error(new Exception("banco no encontrado")));
+    }
+
+
+    @Override
+    public Mono<MessageDTO> otherBankTransaction(String idBankOrigin, String numAccountOri, String numAccountDes, double money) {
+        //que hago si me devuelve mono error??
+        //verificar primero que banco existe
+        return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
+            return getProductBankId(numAccountOri).flatMap(prodBankId -> {
+                if (!prodBankId.equals(idBankOrigin)) {
+                    return bankTransaction(numAccountOri, numAccountDes, money).flatMap(msResponse -> {
+                        if (msResponse.getCode().equals("1")) {
+                            //cobrar comision
+                            //devolver mensaje del servicio de cobro de comision
+                            return chargeComission(numAccountOri, bank.getTransactionComission());
+                        } else {
+                            return Mono.error(new Exception("Error en la transaccion"));
+                        }
+                    });
+                } else {
+                    return Mono.error(new Exception("el producto pertenece a este banco"));
+                }
+            });
+        }).switchIfEmpty(Mono.error(new Exception("banco no encontrado")));
+    }
+
+
+    @Override
+    public Mono<MessageDTO> otherBankPayCreditDebt(String idBankOrigin, String numAccount, String creditNumber) {
+        return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
+            return getProductBankId(numAccount).flatMap(prodBankId -> {
+                if (!prodBankId.equals(idBankOrigin)) {
+                    return payCreditDebt(numAccount, creditNumber).flatMap(msResponse -> {
+                        if (msResponse.getCode().equals("1")) {
+                            //cobrar comision
+                            //devolver mensaje del servicio de cobro de comision
+                            return chargeComission(numAccount, bank.getCreditPayComission());
+                        } else {
+                            return Mono.error(new Exception("Error en la transaccion"));
+                        }
+                    });
+                } else {
+                    return Mono.error(new Exception("el producto pertenece a este banco"));
+                }
+            });
+        }).switchIfEmpty(Mono.error(new Exception("banco no encontrado")));
     }
 
 }
