@@ -1,5 +1,7 @@
 package com.everis.bankms.dto;
 
+
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MessageDTO {
-    private String code;
-    private String message;
+public class ClientProfilesDto {
+
+  private Set<String> clientProfiles;
 }
