@@ -1,4 +1,4 @@
-package com.everis.bankms;
+package com.everis.bootcamp.bankms;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

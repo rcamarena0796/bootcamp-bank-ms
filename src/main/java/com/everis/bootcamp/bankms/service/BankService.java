@@ -1,15 +1,13 @@
-package com.everis.bankms.service;
+package com.everis.bootcamp.bankms.service;
 
-import com.everis.bankms.dto.BankMaxTransDto;
-import com.everis.bankms.dto.ClientProfilesDto;
-import com.everis.bankms.dto.MessageDto;
-import com.everis.bankms.model.Bank;
+import com.everis.bootcamp.bankms.dto.BankMaxTransDto;
+import com.everis.bootcamp.bankms.dto.ClientProfilesDto;
+import com.everis.bootcamp.bankms.dto.MessageDto;
+import com.everis.bootcamp.bankms.model.Bank;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface BankService {
-
-  public Mono<Bank> findByName(String name);
 
   public Mono<Bank> findById(String id);
 
@@ -17,7 +15,7 @@ public interface BankService {
 
   public Mono<Bank> update(Bank c, String id);
 
-  public Mono<Void> delete(String id);
+  public Mono<String> delete(String id);
 
   public Mono<Bank> save(Bank cl);
 

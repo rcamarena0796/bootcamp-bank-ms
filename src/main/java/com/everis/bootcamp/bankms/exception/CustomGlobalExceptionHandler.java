@@ -1,4 +1,4 @@
-package com.everis.bankms.exception;
+package com.everis.bootcamp.bankms.exception;
 
 import java.util.Date;
 import java.util.LinkedHashMap;

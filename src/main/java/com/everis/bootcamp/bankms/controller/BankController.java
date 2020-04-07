@@ -1,16 +1,15 @@
-package com.everis.bankms.controller;
+package com.everis.bootcamp.bankms.controller;
 
-import com.everis.bankms.dto.BankMaxTransDto;
-import com.everis.bankms.dto.ClientProfilesDto;
-import com.everis.bankms.dto.MessageDto;
-import com.everis.bankms.model.Bank;
-import com.everis.bankms.service.BankService;
+import com.everis.bootcamp.bankms.dto.BankMaxTransDto;
+import com.everis.bootcamp.bankms.dto.ClientProfilesDto;
+import com.everis.bootcamp.bankms.dto.MessageDto;
+import com.everis.bootcamp.bankms.model.Bank;
+import com.everis.bootcamp.bankms.service.BankService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import java.net.URI;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -68,7 +67,7 @@ public class BankController {
   }
 
   @ApiOperation(value = "Service used to get the comissions of a bank")
-  @GetMapping("/bankComission/{numId}")
+  @GetMapping("/bankMaxTrans/{numId}")
   public Mono<BankMaxTransDto> bankComission(@PathVariable("numId") String numId) {
     return service.getbankComission(numId);
   }
@@ -108,8 +107,13 @@ public class BankController {
   @DeleteMapping("/delete/{id}")
   public Mono<ResponseEntity<Void>> delete(@PathVariable String id) {
     return service.delete(id)
-        .then(Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT)))
-        .defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
+        .map(res -> ResponseEntity
+            .ok()
+            .<Void>build())
+        .defaultIfEmpty(ResponseEntity
+            .notFound()
+            .build()
+        );
   }
 
   //TRANSACCION

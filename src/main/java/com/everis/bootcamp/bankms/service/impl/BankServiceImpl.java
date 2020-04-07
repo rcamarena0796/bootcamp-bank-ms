@@ -1,12 +1,13 @@
-package com.everis.bankms.service.impl;
+package com.everis.bootcamp.bankms.service.impl;
 
 
-import com.everis.bankms.dao.BankRepository;
-import com.everis.bankms.dto.BankMaxTransDto;
-import com.everis.bankms.dto.ClientProfilesDto;
-import com.everis.bankms.dto.MessageDto;
-import com.everis.bankms.model.Bank;
-import com.everis.bankms.service.BankService;
+import com.everis.bootcamp.bankms.dao.BankRepository;
+import com.everis.bootcamp.bankms.dto.BankMaxTransDto;
+import com.everis.bootcamp.bankms.dto.ClientProfilesDto;
+import com.everis.bootcamp.bankms.dto.MessageDto;
+import com.everis.bootcamp.bankms.model.Bank;
+import com.everis.bootcamp.bankms.service.BankService;
+import com.everis.bootcamp.bankms.service.ExternalCallService;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -14,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,11 +26,9 @@ public class BankServiceImpl implements BankService {
   @Autowired
   private BankRepository bankRepo;
 
+  @Autowired
+  private ExternalCallService externalCall;
 
-  @Override
-  public Mono<Bank> findByName(String name) {
-    return bankRepo.findByName(name);
-  }
 
   @Override
   public Flux<Bank> findAll() {
@@ -101,11 +99,12 @@ public class BankServiceImpl implements BankService {
   }
 
   @Override
-  public Mono<Void> delete(String id) {
+  public Mono<String> delete(String id) {
     try {
-      return bankRepo.findById(id).flatMap(cl -> {
-        return bankRepo.delete(cl);
-      });
+      return bankRepo.findById(id).map(cl -> {
+        bankRepo.delete(cl).subscribe();
+        return cl.getId();
+      }).switchIfEmpty(Mono.empty());
     } catch (Exception e) {
       return Mono.error(e);
     }
@@ -156,70 +155,18 @@ public class BankServiceImpl implements BankService {
     }
   }
 
-  private Mono<MessageDto> depositRet(String numAccount, double money) {
-    String url = "http://localhost:8010/bankprod/transaction/" + numAccount;
-    return WebClient.create()
-        .post()
-        .uri(url)
-        .bodyValue(money)
-        .retrieve()
-        .bodyToMono(MessageDto.class);
-  }
-
-
-  private Mono<MessageDto> payCreditDebt(String numAccount, String creditNumber) {
-    String url = "http://localhost:8010/bankprod/payCreditDebt/" + numAccount + "/" + creditNumber;
-    return WebClient.create()
-        .post()
-        .uri(url)
-        .retrieve()
-        .bodyToMono(MessageDto.class);
-  }
-
-  private Mono<MessageDto> bankTransaction(String numAccountOrigin, String numAccountDestination,
-      double money) {
-    String url = "http://localhost:8010/bankprod/bankProductTransaction/" + numAccountOrigin + "/"
-        + numAccountDestination;
-    return WebClient.create()
-        .post()
-        .uri(url)
-        .bodyValue(money)
-        .retrieve()
-        .bodyToMono(MessageDto.class);
-  }
-
-  private Mono<String> getProductBankId(String numAccount) {
-    String url = "http://localhost:8010/bankprod/getBankId/" + numAccount;
-    return WebClient.create()
-        .get()
-        .uri(url)
-        .retrieve()
-        .bodyToMono(String.class);
-  }
-
-  private Mono<MessageDto> chargeComission(String numAccount, double comission) {
-    String url = "http://localhost:8010/bankprod/chargeExtComission/" + numAccount;
-    return WebClient.create()
-        .post()
-        .uri(url)
-        .bodyValue(comission)
-        .retrieve()
-        .bodyToMono(MessageDto.class);
-  }
-
   @Override
   public Mono<MessageDto> otherBankDepositRet(String idBankOrigin, String numAccount,
       double money) {
-    //que hago si me devuelve mono error??
     //verificar primero que banco existe
     return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
-      return getProductBankId(numAccount).flatMap(prodBankId -> {
+      return externalCall.getProductBankId(numAccount).flatMap(prodBankId -> {
         if (!prodBankId.equals(idBankOrigin)) {
-          return depositRet(numAccount, money).flatMap(msResponse -> {
+          return externalCall.depositRet(numAccount, money).flatMap(msResponse -> {
             if (msResponse.getCode().equals("1")) {
               //cobrar comision
               //devolver mensaje del servicio de cobro de comision
-              return chargeComission(numAccount, bank.getDepRetComission());
+              return externalCall.chargeComission(numAccount, bank.getDepRetComission());
             } else {
               return Mono.error(new Exception("Error en la transaccion"));
             }
@@ -238,13 +185,13 @@ public class BankServiceImpl implements BankService {
     //que hago si me devuelve mono error??
     //verificar primero que banco existe
     return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
-      return getProductBankId(numAccountOri).flatMap(prodBankId -> {
+      return externalCall.getProductBankId(numAccountOri).flatMap(prodBankId -> {
         if (!prodBankId.equals(idBankOrigin)) {
-          return bankTransaction(numAccountOri, numAccountDes, money).flatMap(msResponse -> {
+          return externalCall.bankTransaction(numAccountOri, numAccountDes, money).flatMap(msResponse -> {
             if (msResponse.getCode().equals("1")) {
               //cobrar comision
               //devolver mensaje del servicio de cobro de comision
-              return chargeComission(numAccountOri, bank.getTransactionComission());
+              return externalCall.chargeComission(numAccountOri, bank.getTransactionComission());
             } else {
               return Mono.error(new Exception("Error en la transaccion"));
             }
@@ -261,13 +208,13 @@ public class BankServiceImpl implements BankService {
   public Mono<MessageDto> otherBankPayCreditDebt(String idBankOrigin, String numAccount,
       String creditNumber) {
     return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
-      return getProductBankId(numAccount).flatMap(prodBankId -> {
+      return externalCall.getProductBankId(numAccount).flatMap(prodBankId -> {
         if (!prodBankId.equals(idBankOrigin)) {
-          return payCreditDebt(numAccount, creditNumber).flatMap(msResponse -> {
+          return externalCall.payCreditDebt(numAccount, creditNumber).flatMap(msResponse -> {
             if (msResponse.getCode().equals("1")) {
               //cobrar comision
               //devolver mensaje del servicio de cobro de comision
-              return chargeComission(numAccount, bank.getCreditPayComission());
+              return externalCall.chargeComission(numAccount, bank.getCreditPayComission());
             } else {
               return Mono.error(new Exception("Error en la transaccion"));
             }

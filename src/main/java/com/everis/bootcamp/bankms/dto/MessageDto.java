@@ -1,4 +1,4 @@
-package com.everis.bankms.dto;
+package com.everis.bootcamp.bankms.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

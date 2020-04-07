@@ -1,6 +1,6 @@
-package com.everis.bankms.dao;
+package com.everis.bootcamp.bankms.dao;
 
-import com.everis.bankms.model.Bank;
+import com.everis.bootcamp.bankms.model.Bank;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Mono;
 

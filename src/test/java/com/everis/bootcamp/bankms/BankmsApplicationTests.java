@@ -1,4 +1,4 @@
-package com.everis.bankms;
+package com.everis.bootcamp.bankms;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,4 +1,4 @@
-package com.everis.bankms.model;
+package com.everis.bootcamp.bankms.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.util.Date;
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Set;
 import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "BANK")
+@Builder(toBuilder = true)
 @EqualsAndHashCode(callSuper = false)
 public class Bank {
 

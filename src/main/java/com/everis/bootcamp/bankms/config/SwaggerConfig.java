@@ -1,4 +1,4 @@
-package com.everis.bankms.config;
+package com.everis.bootcamp.bankms.config;
 
 import java.util.Arrays;
 import java.util.HashSet;
