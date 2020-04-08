@@ -145,7 +145,7 @@ public class BankServiceImpl implements BankService {
   }
 
   @Override
-  public Mono<BankMaxTransDto> getbankComission(String numId) {
+  public Mono<BankMaxTransDto> getBankMaxTrans(String numId) {
     try {
       return bankRepo.findByNumId(numId).map(bank -> {
         return new BankMaxTransDto(bank.getProductMaxTrans());
@@ -187,15 +187,17 @@ public class BankServiceImpl implements BankService {
     return bankRepo.findByNumId(idBankOrigin).flatMap(bank -> {
       return externalCall.getProductBankId(numAccountOri).flatMap(prodBankId -> {
         if (!prodBankId.equals(idBankOrigin)) {
-          return externalCall.bankTransaction(numAccountOri, numAccountDes, money).flatMap(msResponse -> {
-            if (msResponse.getCode().equals("1")) {
-              //cobrar comision
-              //devolver mensaje del servicio de cobro de comision
-              return externalCall.chargeComission(numAccountOri, bank.getTransactionComission());
-            } else {
-              return Mono.error(new Exception("Error en la transaccion"));
-            }
-          });
+          return externalCall.bankTransaction(numAccountOri, numAccountDes, money)
+              .flatMap(msResponse -> {
+                if (msResponse.getCode().equals("1")) {
+                  //cobrar comision
+                  //devolver mensaje del servicio de cobro de comision
+                  return externalCall
+                      .chargeComission(numAccountOri, bank.getTransactionComission());
+                } else {
+                  return Mono.error(new Exception("Error en la transaccion"));
+                }
+              });
         } else {
           return Mono.error(new Exception("el producto pertenece a este banco"));
         }

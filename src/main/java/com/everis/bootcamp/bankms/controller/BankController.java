@@ -24,7 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 
-@Api(tags = "Bank API", value = "CRUD operations for clients")
+@Api(tags = "Bank API", value = "CRUD operations for banks")
 @RestController
 @RequestMapping("/bank")
 public class BankController {
@@ -42,7 +42,7 @@ public class BankController {
     return Mono.justOrEmpty(hola);
   }
 
-  @ApiOperation(value = "Service used to return all clients")
+  @ApiOperation(value = "Service used to return all banks")
   @GetMapping("/findAll")
   public Flux<Bank> findAll() {
     return service.findAll();
@@ -69,7 +69,7 @@ public class BankController {
   @ApiOperation(value = "Service used to get the comissions of a bank")
   @GetMapping("/bankMaxTrans/{numId}")
   public Mono<BankMaxTransDto> bankComission(@PathVariable("numId") String numId) {
-    return service.getbankComission(numId);
+    return service.getBankMaxTrans(numId);
   }
 
   /**

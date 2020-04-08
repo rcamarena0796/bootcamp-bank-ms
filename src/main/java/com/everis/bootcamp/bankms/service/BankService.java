@@ -25,7 +25,7 @@ public interface BankService {
 
   public Mono<ClientProfilesDto> getClientProfiles(String numId);
 
-  public Mono<BankMaxTransDto> getbankComission(String numId);
+  public Mono<BankMaxTransDto> getBankMaxTrans(String numId);
 
   public Mono<MessageDto> otherBankDepositRet(String idBankOrigin, String numAccount, double money);
 
